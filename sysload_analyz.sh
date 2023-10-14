@@ -6,16 +6,27 @@
 # if this condition is met:
 # run and collect point in time perf trace and generate a flamegraph at 99Hz polling.
 
-# sysload check
-cpu_cores=$(cat /proc/cpuinfo|grep "model name"|wc -l)
-sysload=$(uptime|grep load|awk -F'average:' '{print $2}'|awk -F',' '{print $1}'|awk -F'.' '{print $1}')
-percentage_load=$(python -c "print ($sysload/$cpu_cores * 100)"|awk -F'.' '{print $1}')
+script_pid=$$
 
-if [[ $percentage_load -gt 120 ]]
-then
-    echo "generating perf report"
-    exit 0
-else
-    echo "sysload is normal"
-    exit 0
-fi
+while true
+do
+    # sysload check
+    cpu_cores=$(cat /proc/cpuinfo|grep "model name"|wc -l)
+    sysload=$(uptime|grep load|awk -F'average:' '{print $2}'|awk -F',' '{print $1}'|awk -F'.' '{print $1}')
+    percentage_load=$(python -c "print ($sysload/$cpu_cores * 100)"|awk -F'.' '{print $1}')
+    echo "sysload = $percentage_load"
+    
+    if [[ $percentage_load -gt 120 ]]
+    then
+        echo "generating perf report"
+        sudo perf record -F 99 -ag -- sleep 30
+        sudo perf script | ./stackcollapse-perf.pl > highload.perf-folded
+        sudo ./flamegraph.pl highload.perf-folded > perf-$(date +%d-%m-%yT%H:%M:%S).svg
+        echo "Flamegraph generated at ./perf.svg"
+        kill -9 $script_pid
+	exit 1
+    else
+        echo "sysload is normal"
+    fi
+    sleep 5
+done
