@@ -21,7 +21,7 @@ do
         echo "generating perf report"
         sudo perf record -F 99 -ag -- sleep 30
         sudo perf script | ./stackcollapse-perf.pl > highload.perf-folded
-        sudo ./flamegraph.pl highload.perf-folded > perf-$(date +%d-%m-%yT%H:%M:%S).svg
+        sudo ./flamegraph.pl highload.perf-folded > perf-$(date "+%d-%m-%yT%HH:%MM:%SS").svg
         echo "Flamegraph generated at ./perf.svg"
         kill -9 $script_pid
 	exit 1
