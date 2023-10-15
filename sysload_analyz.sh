@@ -19,6 +19,8 @@ do
     if [[ $percentage_load -gt 120 ]]
     then
         echo "generating perf report"
+	date_now=$(date "+%d-%m-%yT%HH%MM%SS")
+	ps aux > ./ps-$date_now.out
         sudo perf record -F 99 -ag -- sleep 30
         sudo perf script | ./stackcollapse-perf.pl > highload.perf-folded
         sudo ./flamegraph.pl highload.perf-folded > perf-$(date "+%d-%m-%yT%HH%MM%SS").svg
